@@ -24,7 +24,7 @@ library(tidyverse)
 
 \newpage
 
-**LINK TO GITHUB**[<https://github.com/AlainaGomez/Homework-5---SDS315>]
+[**Link to Github**](https://github.com/AlainaGomez/Homework-5---SDS315)
 
 # Problem 1 - Iron Bank
 
@@ -112,7 +112,7 @@ range and therefore should be taken legal action against.
 
 ## Part A
 
-**Link to Part A**[<https://github.com/AlainaGomez/Homework-5---SDS315>]
+[**Link to Github for Part A**](https://github.com/AlainaGomez/Homework-5---SDS315)
 
 ```{r, echo = FALSE}
 letter_freq <- read.csv("/Users/alainagomez/Desktop/letter_frequencies.csv")
