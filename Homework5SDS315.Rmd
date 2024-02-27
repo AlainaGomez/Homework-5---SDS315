@@ -1,0 +1,246 @@
+---
+title: "Homework 4 - SDS315"
+author: "Alaina Gomez (agg3395)"
+date: "2024-02-13"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(mosaic)
+library(knitr)
+library(tidyverse)
+```
+
+\newpage
+
+**LINK TO GITHUB[<https://github.com/AlainaGomez/Homework-5---SDS315>]**
+
+# Problem 1 - Iron Bank
+
+**Null Hypothesis**: Over the long run, securities trades from the Iron
+Bank are flagged at the same 2.4% baseline rate as that of other
+traders.
+
+**Test Statistic**: Testing if rate of flagged trades out of the total
+2,021 trades by Iron Bank employees is the same as the baseline rate of
+2.4% for all banks.
+
+**Plot of T-Stat. Distribution** (assuming null hypothesis is true):
+
+```{r, echo = FALSE}
+total_trades <- 2021
+base_prob <- 0.024
+obser_flags <- 70
+
+set.seed(25)
+# 0 represents non-flagged trades, 1 represents flagged trades, account for baseline probability
+bank_data <- rep(0, total_trades - obser_flags)
+bank_data <- c(rep(0, round((1 - base_prob) * total_trades)), 
+               rep(1, round(base_prob * total_trades)))
+
+
+# do this 100000 times, sum the amount of flagged trades for iron bank
+boot_bank <- do(100000)*sample(bank_data, size = total_trades, replace = TRUE) %>% sum()
+```
+
+```{r, echo = FALSE}
+p_bank <- mean(boot_bank >= obser_flags)
+ggplot(boot_bank, aes(x = result)) + geom_histogram(binwidth = 1, fill = "grey", color = "black") + theme_minimal() + labs(x = "Flagged Trades", y = "Count", title = "Bootstrapped Distribution of Flagged Trades (Iron Bank)") +  geom_vline(xintercept = 70, linetype = "dashed", color = "black")
+```
+
+**The P-Value is `r p_bank`**.
+
+**Conclusion**: Because the p-value is significantly below 0.05, the
+test rejects the null hypothesis that the Iron Bank is flagged at the
+same rate (2.4%) of that of other banks.
+
+\newpage
+
+# Problem 2 - Health Inspections
+
+**Null Hypothesis**: On average, all restaurants inspections in the city
+are cited for health code violations at the same 3% baseline rate.
+
+**Test Statistic**: Testing if the observed data for Gourmet Bites is
+consistent with the Health Department's health code violation rate of
+3%.
+
+**Plot of T-Stat. Distribution**: (assuming null hypothesis is true):
+
+```{r, echo = FALSE}
+total_health <- 50
+base_prob <- 0.03
+obser_health <- 8
+
+set.seed(25)
+# 0 represents passed restaurants, 1 represents failed restaurants, accounting for baseline probability
+food_data <- rep(0, total_health - obser_health)
+food_data <- c(rep(0, round((1 - base_prob) * total_health)), 
+               rep(1, round(base_prob * total_health)))
+
+
+# do this 100000 times, sum the amount of failed inspections for gourmet bites
+boot_food <- do(100000)*sample(food_data, size = total_health, replace = TRUE) %>% sum()
+```
+
+```{r, echo = FALSE}
+p_food <- mean(boot_food >= obser_health)
+ggplot(boot_food, aes(x = result)) + geom_histogram(binwidth = 1, fill = "grey", color = "black") + theme_minimal() + geom_vline(xintercept = 8, linetype = "dashed", color = "black") + labs(x = "Number of Health Code Violations", y = "Count", title = "Bootstrapped Distribution of Health Code Violations (Gourmet Bites)")
+```
+
+**The P-Value is `r p_food`**.
+
+**Conclusion**: Since the p-value is significantly below 0.05, the test
+also rejects the null hypothesis that all restaurants are cited at the
+same 3% baseline rate because Gourmet Bites is significantly out of this
+range and therefore should be taken legal action against.
+
+\newpage
+
+# Problem 3 - LLM Watermarking
+
+## Part A
+
+**Link to Part A[<https://github.com/AlainaGomez/Homework-5---SDS315>]**
+
+```{r, echo = FALSE}
+letter_freq <- read.csv("/Users/alainagomez/Desktop/letter_frequencies.csv")
+lines <- readLines("~/Desktop/brown_sentences.txt")
+
+calculate_chi_squared <- function(line, freq_table) {
+  freq_table$Probability <- freq_table$Probability / sum(freq_table$Probability)
+  
+  clean_line <- gsub("[^A-Za-z]", "", line)
+  clean_line <- toupper(clean_line)
+  
+  observed_counts <- table(factor(strsplit(clean_line, "")[[1]], levels = freq_table$Letter))
+  
+  total_letters <- sum(observed_counts)
+  expected_counts <- total_letters * freq_table$Probability
+  
+  chi_squared_stat <- sum((observed_counts - expected_counts)^2 / expected_counts)
+
+  return(chi_squared_stat)
+}
+
+chi_squared_a <- numeric(length(lines))
+
+for (i in seq_along(lines)) {
+  chi_squared_a[i] <- calculate_chi_squared(lines[i], letter_freq)
+}
+```
+
+## Part B
+
+```{r, echo = FALSE}
+sentences <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+chi_squared_b <- numeric(length(sentences))
+for (i in seq_along(sentences)) {
+  chi_squared_b[i] <- calculate_chi_squared(sentences[i], letter_freq)
+}
+
+calculate_p_values <- function(chi_squared_values, freq_table) {
+  df <- nrow(freq_table) - 1
+  
+  p_values <- pchisq(chi_squared_values, df = df, lower.tail = FALSE)
+  p_values <- round(p_values, 3)
+  
+  return(p_values)
+}
+
+p_values_b <- calculate_p_values(chi_squared_b, letter_freq)
+
+p_values <- tibble(
+  sentence_num = 1:length(chi_squared_b),
+  p_value = p_values_b
+)
+```
+
+**Of these sentences...**
+
+1.  She opened the book and started to read the first chapter, eagerly
+    anticipating what might come next.
+
+2.  Despite the heavy rain, they decided to go for a long walk in the
+    park, crossing the main avenue by the fountain in the center.
+
+3.  The museum's new exhibit features ancient artifacts from various
+    civilizations around the world.
+
+4.  He carefully examined the document, looking for any clues that might
+    help solve the mystery.
+
+5.  The students gathered in the auditorium to listen to the guest
+    speaker's inspiring lecture.
+
+6.  Feeling vexed after an arduous and zany day at work, she hoped for a
+    peaceful and quiet evening at home, cozying up after a quick dinner
+    with some TV, or maybe a book on her upcoming visit to Auckland.
+
+7.  The chef demonstrated how to prepare a delicious meal using only
+    locally sourced ingredients, focusing mainly on some excellent
+    dinner recipes from Spain.
+
+8.  They watched the sunset from the hilltop, marveling at the beautiful
+    array of colors in the sky.
+
+9.  The committee reviewed the proposal and provided many points of
+    useful feedback to improve the project's effectiveness.
+
+10. Despite the challenges faced during the project, the team worked
+    tirelessly to ensure its successful completion, resulting in a
+    product that exceeded everyone's expectations.
+
+**The sentence produced by a LLM is sentence #6.**
+
+```{r, echo = FALSE}
+kable(p_values, format = "markdown")
+```
+
+\newpage
+
+**Null Hypothesis**: The provided sentences follows the "typical"
+English letter distribution.
+
+**Test Statistic**: Testing the chi-squared of these sentences based on
+letter frequencies.
+
+**Plot of P-Values**:
+
+```{r, echo = FALSE}
+ggplot(p_values, aes(x = sentence_num, y = p_value)) + geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = seq(min(p_values$sentence_num), max(p_values$sentence_num), by = 1)) + labs(x = "Sentence Number", y = "P-Value", title = "P-Value for Given Sentences") + theme_minimal()
+```
+
+**Conclusion**: I know this sentenced was produced by a LLM because the
+calculated p-value comparing the chi-squared statistics of these
+sentences and the average probability of letter-use was extremely less
+than 0.05, in fact, the calculated p-value was 0.00. Essentially, this
+says that the sentence is so abnormal to average letter-use that there
+is zero chance that this sentences was NOT made by an LLM. A few other
+sentences also have low p-values, however, sentence six stands out as it
+indicates it is (statistically speaking) impossible to have naturally
+made this sentence.
